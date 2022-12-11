@@ -1,0 +1,166 @@
+---
+title: "EDA"
+author: "Lily Slater"
+date: '2022-11-29'
+output: html_document
+---
+
+
+### Explore the Ames Housing Dataset with Pandas Assignment
+#### 1. Load and understand the data
+
+Load in Data
+```{r}
+ames <- read.csv("~/Desktop/DS311/DS311-Technologies-in-Data-Analytic/Week_9_Exploratory_Data_Analysis/EDA_Python/data/ames.csv", stringsAsFactors=TRUE)
+
+str(ames)
+
+```
+
+
+#### 2. Explore Data Distributions
+
+Write code to produce histograms showing the distributions of SalePrice, TotRmsAbvGrd, and OverallCond.
+
+
+##### Sale Price
+
+Histogram
+```{r}
+library(ggplot2)
+ggplot(data=ames,  aes(x= SalePrice)) +
+      geom_histogram(colour = 4, fill = "light blue", bins = 50) +
+  scale_x_continuous(breaks = seq(0 , max(ames$SalePrice) , 80000)) +
+  labs(x="Sale Price", y="Number of Houses") +
+  ggtitle("Distribuition of Sale Prices") +
+  geom_vline(xintercept=mean(ames[["SalePrice"]]), size=1, color="black")
+
+
+```
+
+Mean, median, and standard deviation:
+
+```{r}
+    print(paste("Mean:     ",  mean(ames[["SalePrice"]])))
+    print(paste("Median:   ", median(ames[["SalePrice"]])))
+    print(paste("Standard Deviation:", sd(ames[["SalePrice"]])))
+
+```
+The mean sale price (180,921) is above the median (163,000) which tells us that there are house prices drawing the average up. From the graph we can see that there is a few houses that have sold around 700,000 that are pulling the mean value higher than the median.
+
+##### Total Rooms Above Grade
+
+Histogram
+```{r}
+library(ggplot2)
+ggplot(data=ames,  aes(x= TotRmsAbvGrd)) +
+      geom_histogram(colour = 4, fill = "light blue", bins = 50) +
+  scale_x_continuous(breaks = seq(0 , max(ames$TotRmsAbvGrd) , 2)) +
+  labs(x="Total Rooms", y="Number of Houses") +
+  ggtitle("Distribuition of Total Rooms Above Grade") +
+  geom_vline(xintercept=mean(ames[["TotRmsAbvGrd"]]), size=1, color="black")
+
+
+```
+
+Mean, median, and standard deviation:
+
+```{r}
+    print(paste("Mean:     ",  mean(ames[["TotRmsAbvGrd"]])))
+    print(paste("Median:   ", median(ames[["TotRmsAbvGrd"]])))
+    print(paste("Standard Deviation:", sd(ames[["TotRmsAbvGrd"]])))
+
+```
+The mean room number above grade (6.5) is above the median (6) which tells us that there are properties drawing the average up. From the graph we can seen that there are houses that have 12-14 rooms that are pulling the mean value higher than the median.
+
+##### Overall Condition
+
+```{r}
+
+ggplot(data=ames,  aes(x= OverallCond)) +
+      geom_histogram(colour = 4, fill = "light blue", bins = 50) +
+  scale_x_continuous(breaks = seq(0 , max(ames$TotRmsAbvGrd) , 2)) +
+  labs(x="Condition of House", y="Number of Houses") +
+  ggtitle("Distribuition of Overall Condition of Houses on a 1-10 Scale") +
+  geom_vline(xintercept=mean(ames[["OverallCond"]]), size=1, color="black")
+
+```
+
+```{r}
+    print(paste("Mean:     ",  mean(ames[["OverallCond"]])))
+    print(paste("Median:   ", median(ames[["OverallCond"]])))
+    print(paste("Standard Deviation:", sd(ames[["OverallCond"]])))
+
+```
+
+The mean house condition (5.6) is above the median (5) which tells us that there are house conditions drawing the average up. From the graph we can see  that there are more conditions higher that the median than below that are pulling the mean value higher than the median.
+
+
+#### 3. Explore Differences between Subsets
+
+
+```{r}
+below_average_conditon = ames[ames$OverallCond < 5, ]
+average_condition = ames[ames$OverallCond == 5, ]
+above_average_condition = ames[ames$OverallCond > 5, ]
+```
+
+```{r}
+ggplot() +
+  geom_histogram(data = below_average_conditon, aes(x = SalePrice), 
+             fill = "dark green", alpha=.8, position="identity", bins = 60)+
+  geom_histogram(data = average_condition, aes(x = SalePrice), 
+             fill = "yellow", alpha=.5, position="identity", bins = 60)+
+  geom_histogram(data = above_average_condition, aes(x = SalePrice), 
+             fill = "light blue", alpha=.7, position="identity", bins =60 )+
+  labs(x = "Sale Price", y = "Number of Houses")+
+  ggtitle("Distributions of Sale Price Grouped by Condition")
+```
+
+It appears that houses of more houses are of average condition and these houses take up a larger spread in sale price.
+With the graph we can see that below average condition results in a lower sale price but surprisingly, average condition houses tend to sell for more than above average houses. 
+
+#### 4. Explore Correlations
+
+
+```{r}
+library(dplyr)
+# Create a df that contains only numeric columns
+numeric_df = select_if(ames, is.numeric)
+
+# Create list of correlations
+
+data_cor <- cor(numeric_df[ , colnames(numeric_df) != "SalePrice"],  
+                numeric_df$SalePrice)
+data_cor 
+which.max(data_cor[,1])
+which.min(data_cor[,1])
+
+```
+
+produce plot of these columns
+```{r}
+attach(numeric_df)
+plot(OverallQual, SalePrice)
+plot(KitchenAbvGr, SalePrice)
+```
+
+The column with the highest correlation is overall quality and lowest correlation is kitchens above ground. Overall quality appears to have a positive relationship with Sale Price. The  plot for Kitchen Above Ground shows most homes have 1, some have 2 but these aren't higher is Sale price. The couple houses that had 3 were also no higher in Sale price.
+
+
+#### 5. Engineer and Explore a New Feature
+
+Group yrSold count
+```{r}
+library(dplyr)
+ames %>% count(YrSold)
+
+ames$Age = (ames$YrSold-ames$YearBuilt)
+print(ames$Age)
+plot(ames$Age, ames$SalePrice, main = "Home Age vs. Sale Price", xlab = "Age of Home at Time of Sale", ylab = "Sale Price", col= 'dark green', ylim=c(0, 800000))
+
+```
+
+The scatter plot shows us that there are more younger houses selling for high sale prices than older houses. Although for many houses the age doesn't make a drastic difference in the sale prices. There are also a few houses, outliers maybe, that are older and sale for a fairly high price,  that said, the majority of the dataset are less than 100 years old, suggesting that these houses main gain value for their age.
+
+
